@@ -108,12 +108,12 @@ class apic:
         canvas = Canvas(frm, width=1200, height=350, bg='yellow')
 
         for i in range(1, len(spine_list) + 1):
-            canvas.create_image(300 + i * 150, 50, image=spine, tags=spine_list[i - 2] + 'a')
-            canvas.create_text(300 + i * 150, 50 + 30, text=spine_list[i - 2], font=('微软雅黑', 20))
+            canvas.create_image(600/len(spine_list)+(i-1)*1200/len(spine_list), 50, image=spine, tags=spine_list[i - 2] + 'a')
+            canvas.create_text(600/len(spine_list)+(i-1)*1200/len(spine_list), 50 + 30, text=spine_list[i - 2], font=('微软雅黑', 20))
 
         for j in range(1, len(leaf_list) + 1):
-            canvas.create_image(j * 250, 200, image=leaf, tags=leaf_list[j - 2] + 'a')
-            canvas.create_text(j * 250, 200 + 60, text=leaf_list[j - 2], font=('微软雅黑', 20))
+            canvas.create_image(600/len(leaf_list)+(j-1)*1200/len(leaf_list), 200, image=leaf, tags=leaf_list[j - 2] + 'a')
+            canvas.create_text(600/len(leaf_list)+(j-1)*1200/len(leaf_list), 200 + 60, text=leaf_list[j - 2], font=('微软雅黑', 20))
 
         self.draw_line(canvas, trail_list)
         canvas.pack()
