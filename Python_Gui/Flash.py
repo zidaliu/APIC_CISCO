@@ -9,6 +9,7 @@ import cobra.mit.session as session
 import cobra.mit.request
 import cobra.mit.session
 import datetime
+from tkMessageBox import *
 
 
 class apic:
@@ -19,17 +20,16 @@ class apic:
         self.top.geometry("1200x1000")
         self.top.resizable(width=True, height=False)
 
-
         self.client_input(self.top)
         self.top.mainloop()
 
-#输入信息后的执行函数：
+#输入信息后才开始执行函数：
     def excution(self,frm,leaf_1,leaf_2):
         self.spine = PhotoImage(file='images/spine.gif')
         self.leaf = PhotoImage(file='images/leaf.gif')
-        [self.dbgAclist_spine, self.dbgAclist_leaf, self.dbgAclist_trail] = self.connect(leaf_1, leaf_2)
+        [self.dbgAclist_spine, self.dbgAclist_leaf, self.dbgAclist_trail] = self.connect(frm,leaf_1, leaf_2)
         self.canvas(frm, self.spine, self.leaf, self.dbgAclist_spine, self.dbgAclist_leaf, self.dbgAclist_trail)
-        self.formlist(frm)
+        self.formlist(frm,leaf_1,leaf_2)
 
 
 #用户输入信息的函数
@@ -50,7 +50,8 @@ class apic:
 
 
     # 连接远程端获取服务
-    def connect(self,leaf_1,leaf_2):
+    def connect(self,frm,leaf_1,leaf_2):
+        flag = 0
         self.mo = cobra.mit.access
         apicurl = 'http://10.124.4.101'
         self.mo_dir = mo.MoDirectory(session.LoginSession(apicurl, 'admin', 'Cisco123'))
@@ -68,15 +69,20 @@ class apic:
                 self.dbgAclist_leaf.append(str(m.n1))
                 self.dbgAclist_spine.append(str(m.transit))
                 self.dbgAclist_trail.append(str(m.rn))
+            else:
+                flag += 1
 
-        self.dbgAclist_spine = list(set(self.dbgAclist_spine))
-        self.dbgAclist_leaf = list(set(self.dbgAclist_leaf))
+        if flag != len(self.dbgAcPathA_objlist):
+            self.dbgAclist_spine = list(set(self.dbgAclist_spine))
+            self.dbgAclist_leaf = list(set(self.dbgAclist_leaf))
+            return self.dbgAclist_spine, self.dbgAclist_leaf, self.dbgAclist_trail
+        else:
+            showerror("Answer", "Sorry, there is no trail bwtween the two leafs!")
 
-        return self.dbgAclist_spine, self.dbgAclist_leaf,self.dbgAclist_trail
 
 
     # 调用方法获取表格内容插入
-    def get_tree(self):
+    def get_tree(self,leaf_1,leaf_2):
         # 删除原节点
         # for _ in map(self.tree.delete, self.tree.get_children("")):
         #     pass
@@ -86,14 +92,20 @@ class apic:
         dbgAcPathA_objlist = self.mo_dir.query(clAcPath)
 
         now = datetime.datetime.now()
-        self.tree.insert("", "end", values=(now.strftime('%Y-%m-%d %H:%M:%S'),dbgAcPathA_objlist[0].dn, dbgAcPathA_objlist[0].
-                                dropPkt, dbgAcPathA_objlist[0].dropPktPercentage, dbgAcPathA_objlist[0].totDropPkt,
-                                dbgAcPathA_objlist[0].totRxPkt, dbgAcPathA_objlist[0].totTxPkt))
-        self.tree.after(2000, self.get_tree)
+
+
+        if leaf_1 in str(dbgAcPathA_objlist[0].dn) and leaf_2 in str(dbgAcPathA_objlist[0].dn):
+            self.tree.insert("", "end",
+                             values=(now.strftime('%Y-%m-%d %H:%M:%S'), dbgAcPathA_objlist[0].dn, dbgAcPathA_objlist[0].
+                                     dropPkt, dbgAcPathA_objlist[0].dropPktPercentage, dbgAcPathA_objlist[0].totDropPkt,
+                                     dbgAcPathA_objlist[0].totRxPkt, dbgAcPathA_objlist[0].totTxPkt))
+
+
+        self.tree.after(2000,lambda :self.get_tree(leaf_1,leaf_2))
 
 
     # 画出表单
-    def formlist(self, frm):
+    def formlist(self,frm,leaf_1,leaf_2):
 
         frm_3 = Frame(frm)
         self.vbar = ttk.Scrollbar(frm_3, orient=VERTICAL)
@@ -110,9 +122,7 @@ class apic:
         self.tree.heading('Tottras', text='总发包数')
         self.tree.heading('Totrecv', text='总收包数')
 
-        self.get_tree()
-
-
+        self.get_tree(leaf_1,leaf_2)
         self.tree.pack()
         frm_3.pack()
 
@@ -127,6 +137,7 @@ class apic:
                                canvas.coords(leaf1_item)[1], fill='red')
             canvas.create_line(canvas.coords(spine_item)[0], canvas.coords(spine_item)[1], canvas.coords(leaf2_item)[0],
                                canvas.coords(leaf2_item)[1], fill='red')
+
 
 
     #构建画布，画出拓扑图
