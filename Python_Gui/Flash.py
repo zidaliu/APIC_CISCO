@@ -71,9 +71,10 @@ class apic:
                 self.dbgAclist_trail.append(str(m.rn))
             else:
                 flag += 1
-
+        """当flag和长度相等时,说明没有找到对应路径"""
         if flag != len(self.dbgAcPathA_objlist):
             self.dbgAclist_spine = list(set(self.dbgAclist_spine))
+            """数组中重复的去除,如201-102只能画一次"""
             self.dbgAclist_leaf = list(set(self.dbgAclist_leaf))
             return self.dbgAclist_spine, self.dbgAclist_leaf, self.dbgAclist_trail
         else:
@@ -93,7 +94,7 @@ class apic:
 
         now = datetime.datetime.now()
 
-
+        """objlist[0]代表第几条path"""
         if leaf_1 in str(dbgAcPathA_objlist[0].dn) and leaf_2 in str(dbgAcPathA_objlist[0].dn):
             self.tree.insert("", "end",
                              values=(now.strftime('%Y-%m-%d %H:%M:%S'), dbgAcPathA_objlist[0].dn, dbgAcPathA_objlist[0].
