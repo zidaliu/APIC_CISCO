@@ -14,6 +14,43 @@ import datetime
 class apic:
 
     def __init__(self):
+        self.top = Tk()
+        self.top.title('闪断检测程序')
+        self.top.geometry("1200x1000")
+        self.top.resizable(width=True, height=False)
+
+
+        self.client_input(self.top)
+        self.top.mainloop()
+
+#输入信息后的执行函数：
+    def excution(self,frm,leaf_1,leaf_2):
+        self.spine = PhotoImage(file='images/spine.gif')
+        self.leaf = PhotoImage(file='images/leaf.gif')
+        [self.dbgAclist_spine, self.dbgAclist_leaf, self.dbgAclist_trail] = self.connect(leaf_1, leaf_2)
+        self.canvas(frm, self.spine, self.leaf, self.dbgAclist_spine, self.dbgAclist_leaf, self.dbgAclist_trail)
+        self.formlist(frm)
+
+
+#用户输入信息的函数
+    def client_input(self,frm):
+        frm_1 = Frame(frm)
+        l_user_1 = Label(frm_1, text='叶子节点1：')
+        l_user_1.pack(side = LEFT)
+        e_user_1 = Entry(frm_1)
+        e_user_1.pack(side = LEFT)
+        l_user_2 = Label(frm_1, text='叶子节点2：')
+        l_user_2.pack(side=LEFT)
+        e_user_2 = Entry(frm_1)
+        e_user_2.pack(side = LEFT)
+        b_login = Button(frm_1, text='查询',command=lambda :self.excution(frm,e_user_1.get(),e_user_2.get()))
+        b_login.pack(side=LEFT)
+
+        frm_1.pack()
+
+
+    # 连接远程端获取服务
+    def connect(self,leaf_1,leaf_2):
         self.mo = cobra.mit.access
         apicurl = 'http://10.124.4.101'
         self.mo_dir = mo.MoDirectory(session.LoginSession(apicurl, 'admin', 'Cisco123'))
@@ -22,26 +59,20 @@ class apic:
         self.clAcPath = cobra.mit.access.ClassQuery('fabricTrail')
         self.dbgAcPathA_objlist = self.mo_dir.query(self.clAcPath)
         self.dbgAclist_spine = []
-        self. dbgAclist_leaf = []
-        self. dbgAclist_trail = []
+        self.dbgAclist_leaf = []
+        self.dbgAclist_trail = []
 
         for m in self.dbgAcPathA_objlist:
-            self.dbgAclist_leaf.append(str(m.n1))
-            self.dbgAclist_spine.append(str(m.transit))
-            self.dbgAclist_trail.append(str(m.rn))
+            # 根据用户选定特定的leaf的值
+            if leaf_1 in str(m.rn) and leaf_2 in str(m.rn):
+                self.dbgAclist_leaf.append(str(m.n1))
+                self.dbgAclist_spine.append(str(m.transit))
+                self.dbgAclist_trail.append(str(m.rn))
 
         self.dbgAclist_spine = list(set(self.dbgAclist_spine))
         self.dbgAclist_leaf = list(set(self.dbgAclist_leaf))
 
-        self.top = Tk()
-        self.top.title('闪断检测程序')
-        self.top.geometry("1200x600")
-        self.top.resizable(width=True, height=False)
-        self.spine = PhotoImage(file='images/spine.gif')
-        self.leaf = PhotoImage(file='images/leaf.gif')
-        self.canvas(self.top, self.spine, self.leaf, self.dbgAclist_spine, self.dbgAclist_leaf, self.dbgAclist_trail)
-        self.formlist(self.top)
-        self.top.mainloop()
+        return self.dbgAclist_spine, self.dbgAclist_leaf,self.dbgAclist_trail
 
 
     # 调用方法获取表格内容插入
@@ -71,11 +102,6 @@ class apic:
                             show='headings',yscrollcommand = self.vbar.set)
         self.vbar.config(command=self.tree.yview)
         self.vbar.pack(side = LEFT, fill = Y )
-
-
-
-
-
         self.tree.heading('Time', text='更新时间')
         self.tree.heading('name', text='路径')
         self.tree.heading('Drop', text='当前丢包数')
